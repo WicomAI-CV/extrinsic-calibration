@@ -27,6 +27,9 @@ from torchvision.utils import save_image
 
 import dataset
 import dataset.kitti_odometry_remote
+import model
+
+from config.model_config import config_transcalib_LVT_efficientnet_june17
 
 DATASET_FILEPATH = "../ETRI_Project_Auto_Calib/datasets/KITTI-Odometry/"
 REMOTE_DATASET_FILEPATH = "/home/wicomai/dataset/KITTI-Odometry/"
@@ -34,6 +37,11 @@ TRAIN_SEQUENCE = list(range(1,22))
 VAL_SEQUENCE = [0]
 RESIZE_IMG = (192, 640)
 CAM_ID = "2"
+
+MODEL_CONFIG = config_transcalib_LVT_efficientnet_june17
+MODEL_CONFIG_CL = DotWiz(MODEL_CONFIG)
+
+DEVICE = "cuda:1" if torch.cuda.is_available() else "cpu"
 
 def check_data(dataset):
     sampled_data = dataset[random.randint(0,len(dataset))]
@@ -130,3 +138,6 @@ if __name__ == "__main__":
     check_data(ds_train)
     print("checking validation dataset")
     check_data(ds_val)
+    
+    models = model.TransCalib_lvt_efficientnet_june2(MODEL_CONFIG_CL).to(DEVICE)
+    print(models)
