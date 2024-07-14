@@ -1,5 +1,5 @@
 import torch
-import so3
+import utils.so3 as so3
 import torch.nn.functional as F
 
 def test_metrics(T_pred, T_gt):
@@ -19,23 +19,14 @@ def test_metrics(T_pred, T_gt):
     # Euler Angles Error Rate
     RIR = torch.bmm(torch.inverse(R_pred), R_gt)
 
-    # yaws = torch.abs(torch.atan2(RIR[:,1,0], RIR[:,0,0]))
-    # pitches = torch.abs(torch.atan2(-RIR[:,2,0], torch.sqrt(RIR[:,2,0]*RIR[:,2,0] + RIR[:,2,2]*RIR[:,2,2])))
-    # rolls = torch.abs(torch.atan2(RIR[:,2,1], RIR[:,2,2]))
+    yaws = torch.atan2(RIR[:,1,0], RIR[:,0,0])
+    pitches = torch.atan2(-RIR[:,2,0], torch.sqrt(RIR[:,2,0]*RIR[:,2,0] + RIR[:,2,2]*RIR[:,2,2]))
+    rolls = torch.atan2(RIR[:,2,1], RIR[:,2,2])
 
-    # yaws = torch.atan2(RIR[:,1,0], RIR[:,0,0])
-    # pitches = torch.atan2(-RIR[:,2,0], torch.sqrt(RIR[:,2,0]*RIR[:,2,0] + RIR[:,2,2]*RIR[:,2,2]))
-    # rolls = torch.atan2(RIR[:,2,1], RIR[:,2,2])
-
-    yaws = torch.atan2(-RIR[:,0,1], RIR[:,0,0])
-    pitches = torch.asin(RIR[:,0,2])
-    rolls = torch.atan2(-RIR[:,1,2], RIR[:,2,2])
-
-    e_yaw = yaws.mean(dim=0)
-    e_pitch = pitches.mean(dim=0)
-    e_roll = rolls.mean(dim=0)
+    e_yaw = (torch.abs(yaws)).mean(dim=0)
+    e_pitch = (torch.abs(pitches)).mean(dim=0)
+    e_roll = (torch.abs(rolls)).mean(dim=0)
     e_r = (e_yaw + e_roll + e_pitch)/3.0
-    # e_r = (torch.abs(e_yaw) + torch.abs(e_roll) + torch.abs(e_pitch))/3.0
 
     # Geodesic Error Rate
     RTR = torch.bmm(torch.transpose(R_pred, 1, 2), R_gt)
