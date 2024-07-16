@@ -27,12 +27,12 @@ from torchvision.utils import save_image
 
 import dataset
 import dataset.kitti_odometry_remote
-import model
+import models
 import criterion
 
 from config.model_config import config_transcalib_LVT_efficientnet_june17
 from checkpoint import load_checkpoint
-from .trainer import train_model
+from trainer import train_model
 
 DATASET_FILEPATH = "../ETRI_Project_Auto_Calib/datasets/KITTI-Odometry/"
 REMOTE_DATASET_FILEPATH = "/home/wicomai/dataset/KITTI-Odometry/"
@@ -40,7 +40,7 @@ TRAIN_SEQUENCE = list(range(1,22))
 VAL_SEQUENCE = [0]
 RESIZE_IMG = (192, 640)
 CAM_ID = "2"
-LOAD_MODEL = True
+LOAD_MODEL = False
 BATCH_SIZE = 16
 
 MODEL_CONFIG = config_transcalib_LVT_efficientnet_june17
@@ -175,11 +175,13 @@ if __name__ == "__main__":
                             pin_memory = PIN_MEMORY, 
                             num_workers = NUM_WORKERS)
     
-    models = model.TransCalib_lvt_efficientnet_june2(MODEL_CONFIG_CL).to(DEVICE)
-    print(models)
+    model_ = models.TransCalib_lvt_efficientnet_june2(MODEL_CONFIG_CL).to(DEVICE)
+    # print(models)
+    total_params = sum([param.nelement() for param in model_.parameters()])
+    print(f'total param: {total_params:,}')
     
     if LOAD_MODEL:
-        model, last_epoch, last_val_loss, last_error_t, last_error_r = load_checkpoint(LOAD_CHECKPOINT_DIR, model)
+        model_, last_epoch, last_val_loss, last_error_t, last_error_r = load_checkpoint(LOAD_CHECKPOINT_DIR, model_)
     else:
         last_epoch, last_val_loss = 0, None
         last_error_t, last_error_r = None, None
@@ -192,11 +194,11 @@ if __name__ == "__main__":
     pcd_loss = criterion.chamfer_distance_loss().to(DEVICE)
     criterion = [reg_loss, rot_loss, pcd_loss]
     
-    optimizer = optim.AdamW(model.parameters(), lr=training_config['learning_rate'], weight_decay=0.1)
+    optimizer = optim.AdamW(model_.parameters(), lr=training_config['learning_rate'], weight_decay=0.1)
     scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.1, patience=10, verbose=True, eps=1e-15)
     
     ### Start training the model
-    train_model(model, 
+    train_model(model_, 
                 train_loader, val_loader, criterion, optimizer, sns_training_config, 
                 last_epoch, last_best_loss=last_val_loss, 
                 last_best_error_t=last_error_t, last_best_error_r=last_error_r,
