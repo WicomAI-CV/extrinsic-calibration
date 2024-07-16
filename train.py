@@ -176,9 +176,10 @@ if __name__ == "__main__":
                             num_workers = NUM_WORKERS)
     
     model_ = models.TransCalib_lvt_efficientnet_june2(MODEL_CONFIG_CL).to(DEVICE)
-    # print(models)
-    total_params = sum([param.nelement() for param in model_.parameters()])
-    print(f'total param: {total_params:,}')
+    print(model_)
+    pytorch_total_params = sum(p.numel() for p in model_.parameters())
+    pytorch_total_params_trainable = sum(p.numel() for p in model_.parameters() if p.requires_grad)
+    print(f'[INFO] Model total parameters: {pytorch_total_params} | Model total trainable parameters {pytorch_total_params_trainable}')
     
     if LOAD_MODEL:
         model_, last_epoch, last_val_loss, last_error_t, last_error_r = load_checkpoint(LOAD_CHECKPOINT_DIR, model_)
