@@ -177,17 +177,17 @@ if __name__ == "__main__":
     reg_loss = criterion.regression_loss().to(DEVICE)
     rot_loss = criterion.rotation_loss().to(DEVICE)
     pcd_loss = criterion.chamfer_distance_loss().to(DEVICE)
-    criterion = [reg_loss, rot_loss, pcd_loss]
+    criterion_ = [reg_loss, rot_loss, pcd_loss]
     
     optimizer = optim.AdamW(model_.parameters(), lr=training_config['learning_rate'], weight_decay=0.1)
     scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.1, patience=10, verbose=True, eps=1e-15)
     
     ### Start training the model
-    train_model(model_, 
-                train_loader, val_loader, criterion, optimizer, sns_training_config, 
-                last_epoch, last_best_loss=last_val_loss, 
-                last_best_error_t=last_error_t, last_best_error_r=last_error_r,
-                scheduler=scheduler, DEVICE=DEVICE, GRAD_CLIP=GRAD_CLIP,
-                MODEL_CONFIG_CL=MODEL_CONFIG_CL, LOAD_MODEL=LOAD_MODEL)
+    # train_model(model_, 
+    #             train_loader, val_loader, criterion_, optimizer, sns_training_config, 
+    #             last_epoch, last_best_loss=last_val_loss, 
+    #             last_best_error_t=last_error_t, last_best_error_r=last_error_r,
+    #             scheduler=scheduler, DEVICE=DEVICE, GRAD_CLIP=GRAD_CLIP,
+    #             MODEL_CONFIG_CL=MODEL_CONFIG_CL, LOAD_MODEL=LOAD_MODEL)
     
     # experiment.end()
