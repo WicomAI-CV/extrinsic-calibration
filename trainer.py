@@ -52,9 +52,9 @@ def train_model(model,
         rot_loss_epoch = 0
         pcd_loss_epoch = 0
 
-        process = tqdm(train_loader, unit='batch')
+        # process = tqdm(train_loader, unit='batch')
 
-        for _, batch_data in enumerate(process):
+        for _, batch_data in enumerate(train_loader):
         # print(i, batch_data)
 
             T_gt = [sample["T_gt"].to(DEVICE) for sample in batch_data]
@@ -124,7 +124,7 @@ def train_model(model,
             # experiment.log_metric("batch rot loss", rotational_loss.item()/targets.shape[0])
             # experiment.log_metric("batch pcd loss", pointcloud_loss.item()/targets.shape[0])
 
-            process.set_postfix(loss=loss.item())
+            # process.set_postfix(loss=loss.item())
             # print('batch_no: ', i)
         train_time = time.time() - epoch_start
         
@@ -228,9 +228,9 @@ def validate(model, loader, crit, DEVICE):
     reg_loss, rot_loss, pcd_loss = crit
     # reg_loss, rot_loss = crit
 
-    process = tqdm(loader, unit='batch')
+    # process = tqdm(loader, unit='batch')
 
-    for _, batch_data in enumerate(process):
+    for _, batch_data in enumerate(loader):
         # print(i, batch_data)
 
         T_gt = [sample["T_gt"].to(DEVICE) for sample in batch_data]
@@ -285,8 +285,8 @@ def validate(model, loader, crit, DEVICE):
         er_epoch += e_r.item()
         dR_epoch += dR.item()
 
-        process.set_description('Validation: ')
-        process.set_postfix(loss=loss.item())
+        # process.set_description('Validation: ')
+        # process.set_postfix(loss=loss.item())
     
     ex_epoch /= len(loader)
     ey_epoch /= len(loader)
