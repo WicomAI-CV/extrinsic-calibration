@@ -1,5 +1,6 @@
 import numpy as np
 import math
+import torch
 
 class pcd_extrinsic_transform: # transform PCD into fisheye camera reference frame.
     def __init__(self, crop = True):
