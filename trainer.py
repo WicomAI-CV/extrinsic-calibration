@@ -134,7 +134,7 @@ def train_model(model,
         pcd_loss_epoch /= len(train_loader)
         
         val_start = time.time()
-        val_loss, error_t, error_r = validate(model, val_loader, crit)
+        val_loss, error_t, error_r = validate(model, val_loader, crit, DEVICE)
         val_time = time.time() - val_start
 
         print(f'L1 = {trans_loss_epoch} | L2 = {rot_loss_epoch} | L3 = {pcd_loss_epoch}')
