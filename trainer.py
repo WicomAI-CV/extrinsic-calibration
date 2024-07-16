@@ -1,6 +1,4 @@
-import os
-import datetime
-import csv
+from datetime import datetime
 import time
 
 import tqdm
