@@ -1,5 +1,5 @@
 import torch
-import utils.so3 as so3
+from . import so3
 import torch.nn.functional as F
 
 def test_metrics(T_pred, T_gt):
