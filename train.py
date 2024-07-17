@@ -77,21 +77,7 @@ if __name__ == "__main__":
     
     ### Load the data from csv file
     ## local dataset
-    ds_train = dataset.KITTI_Odometry(rootdir=DATASET_FILEPATH,
-                              sequences=TRAIN_SEQUENCE,
-                              camera_id=CAM_ID,
-                              frame_step=2,
-                              n_scans=None,
-                              voxel_size=None,
-                              max_trans = [1.5, 1.0, 0.5, 0.2, 0.1],
-                              max_rot = [20, 10, 5, 2, 1],
-                              rgb_transform=rgb_transform,
-                              depth_transform=depth_transform,
-                              device='cpu'
-                              )
-    
-    ## remote dataset
-    # ds_train = dataset.KITTI_Odometry_remote(rootdir=REMOTE_DATASET_FILEPATH,
+    # ds_train = dataset.KITTI_Odometry(rootdir=DATASET_FILEPATH,
     #                           sequences=TRAIN_SEQUENCE,
     #                           camera_id=CAM_ID,
     #                           frame_step=2,
@@ -104,13 +90,9 @@ if __name__ == "__main__":
     #                           device='cpu'
     #                           )
     
-    
-    # logging.info('Successfully loaded the dataset with length of: ', str(len(load_ds)))
-    print('Successfully loaded the training dataset with length of: ', str(len(ds_train)))
-    
-    ## local dataset
-    ds_val = dataset.KITTI_Odometry(rootdir=DATASET_FILEPATH,
-                              sequences=VAL_SEQUENCE,
+    ## remote dataset
+    ds_train = dataset.KITTI_Odometry_remote(rootdir=REMOTE_DATASET_FILEPATH,
+                              sequences=TRAIN_SEQUENCE,
                               camera_id=CAM_ID,
                               frame_step=2,
                               n_scans=None,
@@ -122,8 +104,12 @@ if __name__ == "__main__":
                               device='cpu'
                               )
     
-    ## remote dataset
-    # ds_val = dataset.KITTI_Odometry_remote(rootdir=REMOTE_DATASET_FILEPATH,
+    
+    # logging.info('Successfully loaded the dataset with length of: ', str(len(load_ds)))
+    print('Successfully loaded the training dataset with length of: ', str(len(ds_train)))
+    
+    ## local dataset
+    # ds_val = dataset.KITTI_Odometry(rootdir=DATASET_FILEPATH,
     #                           sequences=VAL_SEQUENCE,
     #                           camera_id=CAM_ID,
     #                           frame_step=2,
@@ -135,6 +121,20 @@ if __name__ == "__main__":
     #                           depth_transform=depth_transform,
     #                           device='cpu'
     #                           )
+    
+    ## remote dataset
+    ds_val = dataset.KITTI_Odometry_remote(rootdir=REMOTE_DATASET_FILEPATH,
+                              sequences=VAL_SEQUENCE,
+                              camera_id=CAM_ID,
+                              frame_step=2,
+                              n_scans=None,
+                              voxel_size=None,
+                              max_trans = [1.5, 1.0, 0.5, 0.2, 0.1],
+                              max_rot = [20, 10, 5, 2, 1],
+                              rgb_transform=rgb_transform,
+                              depth_transform=depth_transform,
+                              device='cpu'
+                              )
     
     print('Successfully loaded the validation dataset with length of: ', str(len(ds_val)))
     
@@ -183,11 +183,11 @@ if __name__ == "__main__":
     scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.1, patience=10, verbose=True, eps=1e-15)
     
     ### Start training the model
-    # train_model(model_, 
-    #             train_loader, val_loader, criterion_, optimizer, sns_training_config, 
-    #             last_epoch, last_best_loss=last_val_loss, 
-    #             last_best_error_t=last_error_t, last_best_error_r=last_error_r,
-    #             scheduler=scheduler, DEVICE=DEVICE, GRAD_CLIP=GRAD_CLIP,
-    #             MODEL_CONFIG_CL=MODEL_CONFIG_CL, LOAD_MODEL=LOAD_MODEL)
+    train_model(model_, 
+                train_loader, val_loader, criterion_, optimizer, sns_training_config, 
+                last_epoch, last_best_loss=last_val_loss, 
+                last_best_error_t=last_error_t, last_best_error_r=last_error_r,
+                scheduler=scheduler, DEVICE=DEVICE, GRAD_CLIP=GRAD_CLIP,
+                MODEL_CONFIG_CL=MODEL_CONFIG_CL, LOAD_MODEL=LOAD_MODEL)
     
     # experiment.end()
