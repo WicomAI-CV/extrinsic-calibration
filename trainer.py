@@ -7,7 +7,7 @@ from torch.nn.utils import clip_grad_norm_
 
 import utils
 from checkpoint import save_checkpoint
-import criterion
+import criteria
 
 def train_model(model, 
                 train_loader, val_loader, 
@@ -228,9 +228,9 @@ def validate(model, loader, crit, DEVICE):
     reg_loss, rot_loss, pcd_loss = crit
     # reg_loss, rot_loss = crit
 
-    # process = tqdm(loader, unit='batch')
+    process = tqdm(loader, unit='batch')
 
-    for _, batch_data in enumerate(loader):
+    for _, batch_data in enumerate(process):
         # print(i, batch_data)
 
         T_gt = [sample["T_gt"].to(DEVICE) for sample in batch_data]
@@ -273,7 +273,7 @@ def validate(model, loader, crit, DEVICE):
         # experiment.log_metric('val batch loss', loss.item()/targets.shape[0])
 
         # print(f'L1 = {translational_loss}| L2 = {rotational_loss} | L3 = {pointcloud_loss}')
-        e_x, e_y, e_z, e_t, e_yaw, e_pitch, e_roll, e_r, dR = criterion.test_metrics(batch_T_pred, T_gt)
+        e_x, e_y, e_z, e_t, e_yaw, e_pitch, e_roll, e_r, dR = criteria.test_metrics(batch_T_pred, T_gt)
 
         ex_epoch += e_x.item()
         ey_epoch += e_y.item()

@@ -12,7 +12,7 @@ from torch.utils.data.dataloader import DataLoader
 import dataset
 import dataset.kitti_odometry_remote
 import models
-import criterion
+import criteria
 
 from config.model_config import config_transcalib_LVT_efficientnet_june17
 from checkpoint import load_checkpoint
@@ -163,7 +163,7 @@ if __name__ == "__main__":
     print(model_)
     pytorch_total_params = sum(p.numel() for p in model_.parameters())
     pytorch_total_params_trainable = sum(p.numel() for p in model_.parameters() if p.requires_grad)
-    print(f'[INFO] Model total parameters: {pytorch_total_params} | Model total trainable parameters {pytorch_total_params_trainable}')
+    print(f'[INFO] Model total parameters: {pytorch_total_params:,} | Model total trainable parameters {pytorch_total_params_trainable:,}')
     
     if LOAD_MODEL:
         model_, last_epoch, last_val_loss, last_error_t, last_error_r = load_checkpoint(LOAD_CHECKPOINT_DIR, model_)
@@ -174,17 +174,17 @@ if __name__ == "__main__":
     sns_training_config = sns(**training_config)
     
     # Criteria
-    reg_loss = criterion.regression_loss().to(DEVICE)
-    rot_loss = criterion.rotation_loss().to(DEVICE)
-    pcd_loss = criterion.chamfer_distance_loss().to(DEVICE)
-    criterion_ = [reg_loss, rot_loss, pcd_loss]
+    reg_loss = criteria.regression_loss().to(DEVICE)
+    rot_loss = criteria.rotation_loss().to(DEVICE)
+    pcd_loss = criteria.chamfer_distance_loss().to(DEVICE)
+    criterion = [reg_loss, rot_loss, pcd_loss]
     
     optimizer = optim.AdamW(model_.parameters(), lr=training_config['learning_rate'], weight_decay=0.1)
     scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.1, patience=10, verbose=True, eps=1e-15)
     
     ### Start training the model
     train_model(model_, 
-                train_loader, val_loader, criterion_, optimizer, sns_training_config, 
+                train_loader, val_loader, criterion, optimizer, sns_training_config, 
                 last_epoch, last_best_loss=last_val_loss, 
                 last_best_error_t=last_error_t, last_best_error_r=last_error_r,
                 scheduler=scheduler, DEVICE=DEVICE, GRAD_CLIP=GRAD_CLIP,

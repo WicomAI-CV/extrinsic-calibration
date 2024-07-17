@@ -233,7 +233,7 @@ class TransCalib_lvt_efficientnet_june2(nn.Module):
 
         pytorch_total_params = sum(p.numel() for p in self.feature_matching.parameters())
         pytorch_total_params_trainable = sum(p.numel() for p in self.feature_matching.parameters() if p.requires_grad)
-        print(f'[INFO] Model total parameters: {pytorch_total_params} | Model total trainable parameters {pytorch_total_params_trainable}')
+        print(f'[INFO] Model total parameters: {pytorch_total_params:,} | Model total trainable parameters {pytorch_total_params_trainable:,}')
         
         self.regression_head = default_regression_head(self.regression_dropout)
         self.recalib = realignment_layer()
@@ -247,9 +247,9 @@ class TransCalib_lvt_efficientnet_june2(nn.Module):
 
         x_out = torch.cat((x_rgb, x_depth), dim=1)
 
-        # print(x_out.shape)
+        print(x_out.shape)
         x_out = self.feature_matching(x_out)
-        # print("x_out after featmat: ", x_out.shape)
+        print("x_out after featmat: ", x_out.shape)
 
         delta_t_pred, delta_q_pred = self.regression_head(x_out)
 
@@ -269,10 +269,7 @@ class default_regression_head(nn.Module):
     def __init__(self, dropout=0.0):
         super(default_regression_head, self).__init__()
         self.dropout = dropout
-        self.fc = nn.Sequential(nn.Linear(2048*3,1024),
-                                nn.ReLU(),
-                                nn.Dropout(self.dropout),
-                                nn.Linear(1024,512),
+        self.fc = nn.Sequential(nn.Linear(512*3,512),
                                 nn.ReLU(),
                                 nn.Dropout(self.dropout),
                                 nn.Linear(512,256),
