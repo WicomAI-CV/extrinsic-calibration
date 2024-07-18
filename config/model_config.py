@@ -22,7 +22,7 @@ config_transcalib_LVT_efficientnet_june17  = {
     }
 
 config_lvt_effnet_light_v1_july18  = {
-        'model_name': 'TransCalib_LVT_EfficientNet_june17',
+        'model_name': 'TransCalib_LVT_EfficientNet_july18',
         'feature_matching' : {
                  'in_ch' : 512,  
                  'conv_repeat' : 1,
