@@ -198,9 +198,9 @@ class conv_attn_csa_new(nn.Module):
 
         return(x)
 
-class TransCalib_lvt_efficientnet_june2(nn.Module):
+class TransCalib_lvt_efficientnet_july18(nn.Module):
     def __init__(self, model_config, trans_norm=False):
-        super(TransCalib_lvt_efficientnet_june2, self).__init__()
+        super(TransCalib_lvt_efficientnet_july18, self).__init__()
     
         self.trans_norm = trans_norm
 
@@ -247,9 +247,9 @@ class TransCalib_lvt_efficientnet_june2(nn.Module):
 
         x_out = torch.cat((x_rgb, x_depth), dim=1)
 
-        print(x_out.shape)
+        # print(x_out.shape)
         x_out = self.feature_matching(x_out)
-        print("x_out after featmat: ", x_out.shape)
+        # print("x_out after featmat: ", x_out.shape)
 
         delta_t_pred, delta_q_pred = self.regression_head(x_out)
 
