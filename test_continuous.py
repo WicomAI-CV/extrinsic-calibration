@@ -11,6 +11,7 @@ import time
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 from PIL import Image
+import open3d as o3d
 import mathutils
 
 import torch
@@ -31,6 +32,7 @@ import dataset
 import dataset.kitti_odometry_remote
 from models.lvt_effnet import TransCalib_lvt_efficientnet_june2
 from models.lvt_effnet_light_v1 import TransCalib_lvt_efficientnet_july18
+from models.lvt_effnet_ablation import TransCalib_lvt_efficientnet_ablation
 import criteria
 
 from config.model_config import *
@@ -49,31 +51,33 @@ DATASET_FILEPATH = "./kitti360_transcalib_new_dataset/dataset.csv"
 TRAIN_SEQUENCE = [3,4,5,6,7,10]
 VAL_SEQUENCE = [0,2]
 TEST_SEQUENCE = [0,2,9]
-SKIP_FRAMES = 1
+SKIP_FRAMES = 10
 RESIZE_IMG = (192, 640)
 TRAIN_LEN = 0.9
 TEST_LEN = 0.1
 VAL_LEN = 0.2
 BATCH_SIZE = 1
-INFER_ITER = 4
-DEVICE = "cuda:0" if torch.cuda.is_available() else "cpu"
-MODEL_CONFIG = config_transcalib_LVT_efficientnet_june17
-# MODEL_CONFIG = config_lvt_effnet_light_v1_july18
+DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+# MODEL_CONFIG = config_transcalib_LVT_efficientnet_june17 # 291M
+MODEL_CONFIG = config_lvt_effnet_light_v1_july18 # 70M
+# MODEL_CONFIG = config_transcalib_LVT_efficientnet_ablation # ablation
 MODEL_CONFIG_CL = DotWiz(MODEL_CONFIG)
-MODEL_CLASS = TransCalib_lvt_efficientnet_june2(MODEL_CONFIG_CL)
-# MODEL_CLASS = TransCalib_lvt_efficientnet_july18(MODEL_CONFIG_CL)
+# MODEL_CLASS = TransCalib_lvt_efficientnet_june2(MODEL_CONFIG_CL) # 291M
+MODEL_CLASS = TransCalib_lvt_efficientnet_july18(MODEL_CONFIG_CL) # 70M
+# MODEL_CLASS = TransCalib_lvt_efficientnet_ablation(MODEL_CONFIG_CL) # ablation
 MODEL_NAME = MODEL_CONFIG_CL.model_name
 MODEL_DATE = datetime.now().strftime('%Y%m%d_%H%M%S')
 CAM_ID = "2"
 LOAD_DSET_FROM_FOLDER = False 
 
 # DIRECTORY
-LOAD_CHECKPOINT_DIR = f"checkpoint_weights/{MODEL_NAME}_20240704_002115_best_val.pth.tar"
-# LOAD_CHECKPOINT_DIR = f"checkpoint_weights/{MODEL_NAME}_20240718_151139_best_val.pth.tar"
+# LOAD_CHECKPOINT_DIR = f"checkpoint_weights/{MODEL_NAME}_20240704_002115_best_val.pth.tar" # 291M
+LOAD_CHECKPOINT_DIR = f"checkpoint_weights/{MODEL_NAME}_20240718_151139_best_val.pth.tar" # 70M
+# LOAD_CHECKPOINT_DIR = f"checkpoint_weights/{MODEL_NAME}_20240823_202426_best_val.pth.tar" # ablation
 
 GRAD_CLIP = 1.0
 NUM_WORKERS = 4
-PIN_MEMORY = True
+PIN_MEMORY = False
 
 torch.cuda.empty_cache()
 
@@ -95,10 +99,10 @@ def check_data(dataset):
         print('{key}: {shape}'.format(key=key,shape=shape))
         
         count += 1
-        
+
 def load_checkpoint(checkpoint_path, model):
     print("=> Loading checkpoint")
-    checkpoint = torch.load(checkpoint_path)
+    checkpoint = torch.load(checkpoint_path, map_location=DEVICE)
     model.load_state_dict(checkpoint["state_dict"])
     last_epoch = checkpoint["epoch"]
     last_epoch_loss = checkpoint["loss"]
@@ -106,7 +110,6 @@ def load_checkpoint(checkpoint_path, model):
     last_best_error_r = checkpoint["rot_error"] 
 
     return model, last_epoch, last_epoch_loss, last_best_error_t, last_best_error_r
-
 
 def generate_misalignment(max_rot = 20, max_trans = 0.5, rot_order='XYZ'):
         rot_z = np.random.uniform(-max_rot, max_rot) * (3.141592 / 180.0)
@@ -125,12 +128,7 @@ def depth_img_gen(point_cloud, T_ext, K_int, im_size, range_mode=False):
         W, H = im_size
 
         n_points = point_cloud.shape[0]
-
-        if T_ext is not None: 
-            pcd_cam = np.matmul(T_ext, np.hstack((point_cloud, np.ones((n_points, 1)))).T).T  # (P_velo -> P_cam)
-        else:
-            pcd_cam = point_cloud
-
+        pcd_cam = np.matmul(T_ext, np.hstack((point_cloud, np.ones((n_points, 1)))).T).T  # (P_velo -> P_cam)
         pcd_cam = pcd_cam[:,:3]
         z_axis = pcd_cam[:,2]  # Extract the z_axis to determine 3D points that located in front of the camera.
 
@@ -164,8 +162,7 @@ def depth_img_gen(point_cloud, T_ext, K_int, im_size, range_mode=False):
 
         return image_tensor
 
-
-def test(model, loader, crit, depth_transform):
+def test(model, loader, crit, max_rot=10, max_trans=0.25):
     # if CAM_ID == "00" or CAM_ID == "01":
     #     im_size, K_int = load_cam_intrinsic("../ETRI_Project_Auto_Calib/datasets/KITTI-360/", CAM_ID)
     # else:
@@ -177,146 +174,194 @@ def test(model, loader, crit, depth_transform):
     #                             distort_params['p2'])
     model.eval()
     val_loss = 0
-    ex_epoch, ey_epoch, ez_epoch, et_epoch = 0., 0., 0., 0.
-    eyaw_epoch, eroll_epoch, epitch_epoch, er_epoch = 0., 0., 0., 0.
-    trans_loss_epoch, rot_loss_epoch, pcd_loss_epoch = 0., 0., 0.
-    dR_epoch = 0.0
+    ex_epoch, ey_epoch, ez_epoch, et_epoch = [], [], [], []
+    eyaw_epoch, eroll_epoch, epitch_epoch, er_epoch = [], [], [], []
+    trans_loss_epoch, rot_loss_epoch, pcd_loss_epoch = [], [], []
+    time_iter = []
+    dR_epoch = []
+    T_mis_list = []
+
+    rotate_pcd = pcd_extrinsic_transform(crop=False)
+    depth_transform = T.Compose([T.Resize((RESIZE_IMG[0], RESIZE_IMG[1])),
+                                 T.Normalize(mean=[0.0404], 
+                                             std=[6.792])])
+
+    T_prev = np.eye(4)
     
     reg_loss, rot_loss, pcd_loss = crit
-    # reg_loss, rot_loss = crit
 
+    delta_R_init, delta_t_init = generate_misalignment(max_rot, max_trans)
+    delta_q_init = rot2qua(delta_R_init)
+    delta_T_init = np.hstack((delta_R_init, np.expand_dims(delta_t_init, axis=1)))
+    delta_T_init = np.vstack((delta_T_init, np.array([0., 0., 0., 1.])))
+    
     process = tqdm(loader, unit='batch')
 
-    for _, batch_data in enumerate(process):
-        # print(i, batch_data)
-        img_path = [sample["img_path"] for sample in batch_data]
-        K_int = [sample["K_int"] for sample in batch_data]
-        im_size = [sample["im_size"] for sample in batch_data]
-
-        T_gt = [sample["T_gt"].to(DEVICE) for sample in batch_data]
-        rgb_img = [sample["img"].to(DEVICE) for sample in batch_data]
-        depth_img = [sample["depth_img_error"].to(DEVICE) for sample in batch_data]
-        delta_q_gt = [sample["delta_q_gt"].to(DEVICE) for sample in batch_data]
-        delta_t_gt = [sample["delta_t_gt"].to(DEVICE) for sample in batch_data]
-        pcd_mis = [sample["pcd_mis"].to(DEVICE) for sample in batch_data]
-        pcd_gt = [sample["pcd_gt"].to(DEVICE) for sample in batch_data]
-
-        T_gt = torch.stack(T_gt, dim=0)
-        rgb_img = torch.stack(rgb_img, dim=0) # correct shape
-        depth_img = torch.stack(depth_img, dim=0) # correct shape
-        delta_q_gt = torch.stack(delta_q_gt, dim=0)
-        delta_t_gt = torch.stack(delta_t_gt, dim=0)
-        targets = torch.cat((delta_q_gt, delta_t_gt), 1) # correct shape
-        # print('targets shape: ', targets.shape)
-
-        T_mis_batch = torch.tensor([]).to(DEVICE)
-
-        for i in range(targets.shape[0]):
-            delta_R_gt  = qua2rot_torch(delta_q_gt[i])
-            delta_tr_gt = torch.reshape(delta_t_gt[i],(3,1))
-            delta_T_gt  = torch.hstack((delta_R_gt, delta_tr_gt)) 
-            delta_T_gt  = torch.vstack((delta_T_gt, torch.Tensor([0., 0., 0., 1.]).to(DEVICE)))
-
-            T_mis = torch.unsqueeze(torch.matmul(delta_T_gt, T_gt[i]), 0)
-            T_mis_batch = torch.cat((T_mis_batch, T_mis), 0)
-        # print(rgb_img.shape, i)
-
-        pcd_mis_ori = pcd_mis
-
-        for _ in range(INFER_ITER):
-            # print("infer iter:", z)
-            # print(depth_img.shape)
-            pcd_pred, batch_T_pred, delta_q_pred, delta_t_pred = model(rgb_img, depth_img,  pcd_mis, T_mis_batch)
-
-            if depth_transform is not None:
-                depth_img = [depth_transform(
-                            depth_img_gen(point_cloud=pcd.detach().cpu().numpy(), 
-                                          T_ext=None, 
-                                          K_int=Kint, 
-                                          im_size=im_sz)
-                                       ) 
-                            for pcd, Kint, im_sz in zip(pcd_pred, K_int, im_size)]
-            else: 
-                depth_img = [depth_img_gen(point_cloud=pcd.detach().cpu().numpy(), 
-                                          T_ext=None, 
-                                          K_int=Kint, 
-                                          im_size=im_sz)
-                            for pcd, Kint, im_sz in zip(pcd_pred, K_int, im_size)]
-            
-            # update for next inference iteration
-            depth_img = torch.stack(depth_img, dim=0).to(DEVICE)
-            pcd_mis = pcd_pred
-            T_mis_batch = batch_T_pred
+    for k, batch_data in enumerate(process):
+        T_gt = batch_data[0]["T_gt"]
+        # print(T_gt.shape)
         
-        translational_loss = reg_loss(delta_q_gt, delta_t_gt, delta_q_pred, delta_t_pred)
-        rotational_loss = rot_loss(delta_q_gt, delta_q_pred)
+        if k == 0:
+            T_mis = np.matmul(delta_T_init, T_gt)
+        else:
+            T_mis = T_prev
+
+        T_mis_list.append(T_mis)
+
+        img_path = batch_data[0]["img_path"]
+        rgb_img = batch_data[0]["img"]
+        K_int = batch_data[0]["K_int"]
+        im_size = batch_data[0]["im_size"]
+
+        pcd_gt = batch_data[0]["pcd_gt"]
+        pcd = batch_data[0]["pcd"]
+
+        depth_img = depth_img_gen(pcd, T_mis, K_int, im_size)
+        if depth_transform is not None:
+            depth_img = depth_transform(depth_img)
+
+        pcd_mis = rotate_pcd(pcd, T_mis)
+
+        pcd_gt = [torch.FloatTensor(pcd_gt).to(DEVICE)]
+        pcd_mis = [torch.FloatTensor(pcd_mis).to(DEVICE)]
+        rgb_img = torch.unsqueeze(rgb_img.to(DEVICE), dim=0)
+        depth_img = torch.unsqueeze(depth_img.to(DEVICE), dim=0)
+        T_mis = torch.unsqueeze(torch.Tensor(T_mis).to(DEVICE), dim=0)
+        T_gt = torch.unsqueeze(torch.Tensor(T_gt).to(DEVICE), dim=0)
+
+        # print(T_mis.shape, T_gt.shape, len(pcd_gt), len(pcd_mis))
+
+        st_inf_time = time.time()
+        pcd_pred, T_pred, delta_q_pred, delta_t_pred = model(rgb_img, 
+                                                             depth_img,  
+                                                             pcd_mis, 
+                                                             torch.Tensor(T_mis).to(DEVICE))
+        end_inf_time = time.time() - st_inf_time
+
+        # translational_loss = reg_loss(delta_q_gt, delta_t_gt, delta_q_pred, delta_t_pred)
+        # rotational_loss = rot_loss(delta_q_gt, delta_q_pred)
         pointcloud_loss = pcd_loss(pcd_gt, pcd_pred)
-        loss = translational_loss + rotational_loss + pointcloud_loss
+        # loss = translational_loss + rotational_loss + pointcloud_loss
         # loss = crit(output, targets)
 
-        val_loss += loss.item()
-        trans_loss_epoch += translational_loss.item()
-        rot_loss_epoch += rotational_loss.item()
-        pcd_loss_epoch += pointcloud_loss.item()
+        # val_loss += loss.item()
+        # trans_loss_epoch += translational_loss.item()
+        # rot_loss_epoch += rotational_loss.item()
+        # pcd_loss_epoch += pointcloud_loss.item()
 
         # print(f'L1 = {translational_loss}| L2 = {rotational_loss} | L3 = {pointcloud_loss}')
-        e_x, e_y, e_z, e_t, e_yaw, e_pitch, e_roll, e_r, dR = criteria.test_metrics(batch_T_pred, T_gt)
+        e_x, e_y, e_z, e_t, e_yaw, e_pitch, e_roll, e_r, dR = criteria.test_metrics(T_pred, T_gt)
 
-        ex_epoch += e_x.item()
-        ey_epoch += e_y.item()
-        ez_epoch += e_z.item()
-        et_epoch += e_t.item()
-        eyaw_epoch += e_yaw.item()
-        eroll_epoch += e_roll.item()
-        epitch_epoch += e_pitch.item()
-        er_epoch += e_r.item()
-        dR_epoch += dR.item()
+        ex_epoch.append(e_x.item())
+        ey_epoch.append(e_y.item())
+        ez_epoch.append(e_z.item())
+        et_epoch.append(e_t.item())
+        eyaw_epoch.append(e_yaw.item()*180/torch.pi)
+        eroll_epoch.append(e_roll.item()*180/torch.pi)
+        epitch_epoch.append(e_pitch.item()*180/torch.pi)
+        er_epoch.append(e_r.item()*180/torch.pi)
+        dR_epoch.append(dR.item())
+        time_iter.append(end_inf_time*1000)
+
+        # update
+        T_prev = torch.squeeze(T_pred).detach().cpu().numpy()
 
         process.set_description('Testing: ')
-        process.set_postfix(loss=loss.item())
+        process.set_postfix(et=e_t.item())
     
-    ex_epoch /= len(loader)
-    ey_epoch /= len(loader)
-    ez_epoch /= len(loader)
-    et_epoch /= len(loader)
-    eyaw_epoch /= len(loader)
-    eroll_epoch /= len(loader)
-    epitch_epoch /= len(loader)
-    er_epoch /= len(loader)
-    dR_epoch /= len(loader)
+    # ex_epoch /= len(loader)
+    # ey_epoch /= len(loader)
+    # ez_epoch /= len(loader)
+    # et_epoch /= len(loader)
+    # eyaw_epoch /= len(loader)
+    # eroll_epoch /= len(loader)
+    # epitch_epoch /= len(loader)
+    # er_epoch /= len(loader)
+    # dR_epoch /= len(loader)
 
-    trans_loss_epoch /= len(loader)
-    rot_loss_epoch /= len(loader)
-    pcd_loss_epoch /= len(loader)
+    print("== X AXIS ==")
+    print("x-axis error mean:", f"{100*np.asarray(ex_epoch).mean():.4f}", "cm")
+    print("x-axis error median:", f"{np.median(100*np.asarray(ex_epoch)):.4f}", "cm")
+    print("x-axis error std:", f"{np.std(100*np.asarray(ex_epoch)):.4f}", "cm")
+
+    print("== Y AXIS ==")
+    print("y-axis error mean:", f"{100*np.asarray(ey_epoch).mean():.4f}", "cm")
+    print("y-axis error median:", f"{np.median(100*np.asarray(ey_epoch)):.4f}", "cm")
+    print("y-axis error std:", f"{np.std(100*np.asarray(ey_epoch)):.4f}", "cm")
+
+    print("== Z AXIS ==")
+    print("z-axis error mean:", f"{100*np.asarray(ez_epoch).mean():.4f}", "cm")
+    print("z-axis error median:", f"{np.median(100*np.asarray(ez_epoch)):.4f}", "cm")
+    print("z-axis error std:", f"{np.std(100*np.asarray(ez_epoch)):.4f}", "cm")
+
+    print("== ET ==")
+    print("Translation error:", f"{100*np.asarray(et_epoch).mean():.4f}", "cm")
+    print("Translation median:", f"{np.median(100*np.asarray(et_epoch)):.4f}", "cm")
+    print("Translation std:", f"{np.std(100*np.asarray(et_epoch)):.4f}", "cm")
+
+    print("== YAW ==")
+    print("yaw error mean:", f"{np.asarray(eyaw_epoch).mean():.4f}", f"\N{DEGREE SIGN}")
+    print("yaw error median:", f"{np.median(100*np.asarray(eyaw_epoch)):.4f}", f"\N{DEGREE SIGN}")
+    print("yaw error std:", f"{np.std(100*np.asarray(eyaw_epoch)):.4f}", f"\N{DEGREE SIGN}")
+
+    print("== PITCH ==")
+    print("pitch error mean:", f"{np.asarray(epitch_epoch).mean():.4f}", f"\N{DEGREE SIGN}")
+    print("pitch error median:", f"{np.median(100*np.asarray(epitch_epoch)):.4f}", f"\N{DEGREE SIGN}")
+    print("pitch error std:", f"{np.std(100*np.asarray(epitch_epoch)):.4f}", f"\N{DEGREE SIGN}")
     
-    print(f"Total loss = {val_loss}")
-    print(f'L1 = {trans_loss_epoch}| L2 = {rot_loss_epoch} | L3 = {pcd_loss_epoch}')
-    print(f'Ex = {ex_epoch*100:.3f} cm | Ey = {ey_epoch*100:.3f} cm | Ez = {ez_epoch*100:.3f} cm | Et = {et_epoch*100:.3f} cm') 
-    print(f'yaw = {eyaw_epoch*180/torch.pi:.3f} \N{DEGREE SIGN} | pitch = {epitch_epoch*180/torch.pi:.3f} \N{DEGREE SIGN} | roll = {eroll_epoch*180/torch.pi:.3f} \N{DEGREE SIGN} | er = {er_epoch*180/torch.pi:.3f} \N{DEGREE SIGN} | Dg = {dR_epoch}')
+    print("== ROLL ==")
+    print("roll error mean:", f"{np.asarray(eroll_epoch).mean():.4f}", f"\N{DEGREE SIGN}")
+    print("roll error median:", f"{np.median(100*np.asarray(eroll_epoch)):.4f}", f"\N{DEGREE SIGN}")
+    print("roll error std:", f"{np.std(100*np.asarray(eroll_epoch)):.4f}", f"\N{DEGREE SIGN}")
     
-    # proj_img = rgb_mono_projection(image_size=im_size,
-    #                                 K_int = K_int)
+    print("== ER ==")
+    print("Rotation error mean:", f"{np.asarray(er_epoch).mean():.4f}", f"\N{DEGREE SIGN}")
+    print("Rotation error median:", f"{np.median(100*np.asarray(er_epoch)):.4f}", f"\N{DEGREE SIGN}")
+    print("Rotation error std:", f"{np.std(100*np.asarray(er_epoch)):.4f}", f"\N{DEGREE SIGN}")
+
+    print("== GD ==")
+    print("geodesic dist:", f"{np.asarray(dR_epoch).mean():.4f}")
     
-    new_img = Image.open(img_path[-1]).convert("RGB")
+    print("== Inference Time ==")
+    print("\nInference Time mean:", f"{np.asarray(time_iter).mean():.2f}", "ms")
+    print("\nInference Time min:", f"{np.asarray(time_iter).min():.2f}", "ms")
+    print("\nInference Time max:", f"{np.asarray(time_iter).max():.2f}", "ms")
+
+    fig = plt.figure()
+    plt.plot(np.asarray(ex_epoch), label='ex')
+    plt.plot(np.asarray(ey_epoch), label='ey')
+    plt.plot(np.asarray(ez_epoch), label='ez')
+    plt.plot(np.asarray(et_epoch), label='et')
+    plt.legend()
+    fig.savefig('plot_test_trans.png')
+
+    fig1 = plt.figure()
+    plt.plot(np.asarray(eyaw_epoch), label='yaw')
+    plt.plot(np.asarray(epitch_epoch), label='pitch')
+    plt.plot(np.asarray(eroll_epoch), label='roll')
+    plt.plot(np.asarray(er_epoch), label='er')
+    plt.legend()
+    fig1.savefig('plot_test_rot.png')
+
+    fig2 = plt.figure()
+    plt.plot(np.asarray(dR_epoch), label='dR')
+    fig2.savefig('plot_test_dr.png')
+
+    new_img = Image.open(img_path).convert("RGB")
     new_img = (T.ToTensor())(new_img)
-    
-    rgb_mono_projection_(im_size[-1],
-                         K_int[-1],
-                         pcd_mis_ori[-1].detach().cpu().numpy(),
-                         pcd_pred[-1].detach().cpu().numpy(),
-                         pcd_gt[-1].detach().cpu().numpy(), 
+
+    pcd_mis_vis = rotate_pcd(pcd, T_mis_list[0])
+
+    rgb_mono_projection_(im_size,
+                         K_int,
+                         pcd_mis_vis,
+                         pcd_pred[0].detach().cpu().numpy(),
+                         pcd_gt[0].detach().cpu().numpy(), 
                          new_img)
 
-def load_checkpoint(checkpoint_path, model):
-    print("=> Loading checkpoint")
-    checkpoint = torch.load(checkpoint_path)
-    model.load_state_dict(checkpoint["state_dict"])
-    last_epoch = checkpoint["epoch"]
-    last_epoch_loss = checkpoint["loss"]
-    last_best_error_t = checkpoint["trans_error"] 
-    last_best_error_r = checkpoint["rot_error"] 
-
-    return model, last_epoch, last_epoch_loss, last_best_error_t, last_best_error_r
+    # trans_loss_epoch /= len(loader)
+    # rot_loss_epoch /= len(loader)
+    # pcd_loss_epoch /= len(loader)
 
 def rgb_mono_projection_(image_size, K_int, pcd_mis, pcd_pred, pcd_gt, rgb_im, range_mode=False):
     W, H = image_size
@@ -410,7 +455,8 @@ def rgb_mono_projection_(image_size, K_int, pcd_mis, pcd_pred, pcd_gt, rgb_im, r
     plt.title("Ground Truth", fontdict = {'fontsize' : 18})
     plt.scatter([u_proj_gt],[v_proj_gt],c=[d_proj_gt],cmap='rainbow_r',alpha=0.6,s=3)
     fig1.tight_layout()
-    fig1.savefig('test_comparison_KITTI_odometry_real.png', transparent=False)
+    fig1.savefig('test_comparison_KITTI_odometry_iter.png', transparent=False)
+
 
 if __name__ == "__main__":
     ### Image Preprocessing
@@ -423,11 +469,11 @@ if __name__ == "__main__":
                                  T.Normalize(mean=[0.0404], 
                                              std=[6.792])])
     
-    ds_test = dataset.KITTI_Odometry(rootdir="../ETRI_Project_Auto_Calib/datasets/KITTI-Odometry/",
+    ds_test = dataset.KITTI_Odometry_TestOnly(rootdir="../ETRI_Project_Auto_Calib/datasets/KITTI-Odometry/",
                             sequences=[0],
                             camera_id=CAM_ID,
-                            frame_step=SKIP_FRAMES,
-                            n_scans=300,
+                            frame_step=1,
+                            n_scans=30,
                             voxel_size=None,
                             max_trans=[1.5],
                             max_rot=[20],
@@ -446,7 +492,7 @@ if __name__ == "__main__":
     # train_loader, val_loader, test_loader = create_DataLoader(load_ds)
     test_loader = DataLoader(dataset = ds_test, 
                              batch_size = BATCH_SIZE, 
-                             shuffle = True, 
+                             shuffle = False, 
                              collate_fn = list, 
                              pin_memory = PIN_MEMORY, 
                              num_workers = NUM_WORKERS)
@@ -476,4 +522,4 @@ if __name__ == "__main__":
     pcd_loss = criteria.chamfer_distance_loss().to(DEVICE)
     criterion = [reg_loss, rot_loss, pcd_loss]
     
-    test(model, test_loader, criterion, depth_transform)
+    test(model, test_loader, criterion)
