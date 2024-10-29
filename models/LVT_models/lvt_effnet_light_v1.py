@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 from timm.models.layers import trunc_normal_
-from .realignment_layer import realignment_layer
+from ..realignment_layer import realignment_layer
 
 from torchvision.models import (efficientnet_v2_s)
 
@@ -198,9 +198,9 @@ class conv_attn_csa_new(nn.Module):
 
         return(x)
 
-class TransCalib_lvt_efficientnet_june2(nn.Module):
+class TransCalib_lvt_efficientnet_july18(nn.Module):
     def __init__(self, model_config, trans_norm=False):
-        super(TransCalib_lvt_efficientnet_june2, self).__init__()
+        super(TransCalib_lvt_efficientnet_july18, self).__init__()
     
         self.trans_norm = trans_norm
 
@@ -230,6 +230,10 @@ class TransCalib_lvt_efficientnet_june2(nn.Module):
                  attn_drop_rate = self.featmat_config.attn_drop_rate, 
                  drop_path_rate = self.featmat_config.drop_path_rate,   
                  )
+
+        pytorch_total_params = sum(p.numel() for p in self.feature_matching.parameters())
+        pytorch_total_params_trainable = sum(p.numel() for p in self.feature_matching.parameters() if p.requires_grad)
+        print(f'[INFO] Model total parameters: {pytorch_total_params:,} | Model total trainable parameters {pytorch_total_params_trainable:,}')
         
         self.regression_head = default_regression_head(self.regression_dropout)
         self.recalib = realignment_layer()
@@ -265,10 +269,7 @@ class default_regression_head(nn.Module):
     def __init__(self, dropout=0.0):
         super(default_regression_head, self).__init__()
         self.dropout = dropout
-        self.fc = nn.Sequential(nn.Linear(2048*3,1024),
-                                nn.ReLU(),
-                                nn.Dropout(self.dropout),
-                                nn.Linear(1024,512),
+        self.fc = nn.Sequential(nn.Linear(512*3,512),
                                 nn.ReLU(),
                                 nn.Dropout(self.dropout),
                                 nn.Linear(512,256),

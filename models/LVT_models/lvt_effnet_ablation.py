@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 from timm.models.layers import trunc_normal_
-from .realignment_layer import realignment_layer
+from ..realignment_layer import realignment_layer
 
 from torchvision.models import (efficientnet_v2_s)
 
@@ -145,24 +145,24 @@ class conv_attn_csa_new(nn.Module):
                     embed_dim=embed_ch[i],
                 )
 
-                _blocks = []
-                for l in range(attn_depths[i]):
-                    block_dpr = drop_path_rate * (l + sum(attn_depths[:i])) / (sum(attn_depths) - 1)
-                    _blocks.append(Transformer_block(
-                        embed_ch[i], 
-                        num_heads=num_heads[i], 
-                        mlp_ratio=mlp_ratios[i],
-                        sa_layer=attn_types[i],
-                        rasa_cfg=None, # I am here
-                        sr_ratio=sr_ratios[i],
-                        qkv_bias=qkv_bias, qk_scale=qk_scale, 
-                        attn_drop=attn_drop_rate, drop_path=block_dpr,
-                        with_depconv=mlp_depconv[i]))
-                _blocks = nn.Sequential(*_blocks)
+            #     _blocks = []
+            #     for l in range(attn_depths[i]):
+            #         block_dpr = drop_path_rate * (l + sum(attn_depths[:i])) / (sum(attn_depths) - 1)
+            #         _blocks.append(Transformer_block(
+            #             embed_ch[i], 
+            #             num_heads=num_heads[i], 
+            #             mlp_ratio=mlp_ratios[i],
+            #             sa_layer=attn_types[i],
+            #             rasa_cfg=None, # I am here
+            #             sr_ratio=sr_ratios[i],
+            #             qkv_bias=qkv_bias, qk_scale=qk_scale, 
+            #             attn_drop=attn_drop_rate, drop_path=block_dpr,
+            #             with_depconv=mlp_depconv[i]))
+            #     _blocks = nn.Sequential(*_blocks)
                 
                 pe_attns.append(nn.Sequential(
-                    _patch_embed, 
-                    _blocks
+                    _patch_embed
+                    # _blocks
                 ))
             
             self.repeated_conv_blocks.append(conv_blocks)
@@ -198,9 +198,9 @@ class conv_attn_csa_new(nn.Module):
 
         return(x)
 
-class TransCalib_lvt_efficientnet_july18(nn.Module):
+class TransCalib_lvt_efficientnet_ablation(nn.Module):
     def __init__(self, model_config, trans_norm=False):
-        super(TransCalib_lvt_efficientnet_july18, self).__init__()
+        super(TransCalib_lvt_efficientnet_ablation, self).__init__()
     
         self.trans_norm = trans_norm
 
@@ -259,7 +259,7 @@ class TransCalib_lvt_efficientnet_july18(nn.Module):
 
         delta_q_pred = nn.functional.normalize(delta_q_pred)
 
-        # # print(delta_t_pred.shape, delta_q_pred.shape)
+        # print(delta_t_pred.shape, delta_q_pred.shape)
 
         batch_T_pred, pcd_pred = self.recalib(pcd_mis, T_mis_batch, delta_q_pred, delta_t_pred)
 
@@ -269,7 +269,10 @@ class default_regression_head(nn.Module):
     def __init__(self, dropout=0.0):
         super(default_regression_head, self).__init__()
         self.dropout = dropout
-        self.fc = nn.Sequential(nn.Linear(512*3,512),
+        self.fc = nn.Sequential(nn.Linear(2048*3,1024),
+                                nn.ReLU(),
+                                nn.Dropout(self.dropout),
+                                nn.Linear(1024,512),
                                 nn.ReLU(),
                                 nn.Dropout(self.dropout),
                                 nn.Linear(512,256),

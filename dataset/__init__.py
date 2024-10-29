@@ -1,2 +1,3 @@
 from .kitti_odometry import KITTI_Odometry
 from .kitti_odometry_remote import KITTI_Odometry_remote
+from .KITTI_Odometry_Dataset_TestOnly import KITTI_Odometry_TestOnly
