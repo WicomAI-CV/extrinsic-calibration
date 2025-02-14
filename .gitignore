@@ -3,3 +3,4 @@ __pycache__/*
 *.png
 cek_dset.py
 checkpoint_weights/*
+cek_model.py

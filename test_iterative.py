@@ -29,8 +29,8 @@ from models.realignment_layer import realignment_layer
 
 import dataset
 import dataset.kitti_odometry_remote
-from models.lvt_effnet import TransCalib_lvt_efficientnet_june2
-from models.lvt_effnet_light_v1 import TransCalib_lvt_efficientnet_july18
+from models.LVT_models.lvt_effnet import TransCalib_lvt_efficientnet_june2
+from models.LVT_models.lvt_effnet_light_v1 import TransCalib_lvt_efficientnet_july18
 import criteria
 
 from config.model_config import *
@@ -182,8 +182,8 @@ def test(model, loader, crit, depth_transform):
     trans_loss_epoch, rot_loss_epoch, pcd_loss_epoch = 0., 0., 0.
     dR_epoch = 0.0
     
-    reg_loss, rot_loss, pcd_loss = crit
-    # reg_loss, rot_loss = crit
+    # reg_loss, rot_loss, pcd_loss = crit
+    reg_loss, rot_loss = crit
 
     process = tqdm(loader, unit='batch')
 
@@ -250,14 +250,14 @@ def test(model, loader, crit, depth_transform):
         
         translational_loss = reg_loss(delta_q_gt, delta_t_gt, delta_q_pred, delta_t_pred)
         rotational_loss = rot_loss(delta_q_gt, delta_q_pred)
-        pointcloud_loss = pcd_loss(pcd_gt, pcd_pred)
-        loss = translational_loss + rotational_loss + pointcloud_loss
+        # pointcloud_loss = pcd_loss(pcd_gt, pcd_pred)
+        loss = translational_loss + rotational_loss # + pointcloud_loss
         # loss = crit(output, targets)
 
         val_loss += loss.item()
         trans_loss_epoch += translational_loss.item()
         rot_loss_epoch += rotational_loss.item()
-        pcd_loss_epoch += pointcloud_loss.item()
+        # pcd_loss_epoch += pointcloud_loss.item()
 
         # print(f'L1 = {translational_loss}| L2 = {rotational_loss} | L3 = {pointcloud_loss}')
         e_x, e_y, e_z, e_t, e_yaw, e_pitch, e_roll, e_r, dR = criteria.test_metrics(batch_T_pred, T_gt)
@@ -473,7 +473,7 @@ if __name__ == "__main__":
     # Criteria
     reg_loss = criteria.regression_loss().to(DEVICE)
     rot_loss = criteria.rotation_loss().to(DEVICE)
-    pcd_loss = criteria.chamfer_distance_loss().to(DEVICE)
-    criterion = [reg_loss, rot_loss, pcd_loss]
+    # pcd_loss = criteria.chamfer_distance_loss().to(DEVICE)
+    criterion = [reg_loss, rot_loss] #, pcd_loss]
     
     test(model, test_loader, criterion, depth_transform)

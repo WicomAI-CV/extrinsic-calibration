@@ -30,9 +30,9 @@ from models.realignment_layer import realignment_layer
 
 import dataset
 import dataset.kitti_odometry_remote
-from models.lvt_effnet import TransCalib_lvt_efficientnet_june2
-from models.lvt_effnet_light_v1 import TransCalib_lvt_efficientnet_july18
-from models.lvt_effnet_ablation import TransCalib_lvt_efficientnet_ablation
+from models.LVT_models.lvt_effnet import TransCalib_lvt_efficientnet_june2
+from models.LVT_models.lvt_effnet_light_v1 import TransCalib_lvt_efficientnet_july18
+from models.LVT_models.lvt_effnet_ablation import TransCalib_lvt_efficientnet_ablation
 import criteria
 
 from config.model_config import *
@@ -58,12 +58,12 @@ TEST_LEN = 0.1
 VAL_LEN = 0.2
 BATCH_SIZE = 1
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-# MODEL_CONFIG = config_transcalib_LVT_efficientnet_june17 # 291M
-MODEL_CONFIG = config_lvt_effnet_light_v1_july18 # 70M
+MODEL_CONFIG = config_transcalib_LVT_efficientnet_june17 # 291M
+# MODEL_CONFIG = config_lvt_effnet_light_v1_july18 # 70M
 # MODEL_CONFIG = config_transcalib_LVT_efficientnet_ablation # ablation
 MODEL_CONFIG_CL = DotWiz(MODEL_CONFIG)
-# MODEL_CLASS = TransCalib_lvt_efficientnet_june2(MODEL_CONFIG_CL) # 291M
-MODEL_CLASS = TransCalib_lvt_efficientnet_july18(MODEL_CONFIG_CL) # 70M
+MODEL_CLASS = TransCalib_lvt_efficientnet_june2(MODEL_CONFIG_CL) # 291M
+# MODEL_CLASS = TransCalib_lvt_efficientnet_july18(MODEL_CONFIG_CL) # 70M
 # MODEL_CLASS = TransCalib_lvt_efficientnet_ablation(MODEL_CONFIG_CL) # ablation
 MODEL_NAME = MODEL_CONFIG_CL.model_name
 MODEL_DATE = datetime.now().strftime('%Y%m%d_%H%M%S')
@@ -71,8 +71,8 @@ CAM_ID = "2"
 LOAD_DSET_FROM_FOLDER = False 
 
 # DIRECTORY
-# LOAD_CHECKPOINT_DIR = f"checkpoint_weights/{MODEL_NAME}_20240704_002115_best_val.pth.tar" # 291M
-LOAD_CHECKPOINT_DIR = f"checkpoint_weights/{MODEL_NAME}_20240718_151139_best_val.pth.tar" # 70M
+LOAD_CHECKPOINT_DIR = f"checkpoint_weights/{MODEL_NAME}_20240704_002115_best_val.pth.tar" # 291M
+# LOAD_CHECKPOINT_DIR = f"checkpoint_weights/{MODEL_NAME}_20240718_151139_best_val.pth.tar" # 70M
 # LOAD_CHECKPOINT_DIR = f"checkpoint_weights/{MODEL_NAME}_20240823_202426_best_val.pth.tar" # ablation
 
 GRAD_CLIP = 1.0
@@ -188,7 +188,7 @@ def test(model, loader, crit, max_rot=10, max_trans=0.25):
 
     T_prev = np.eye(4)
     
-    reg_loss, rot_loss, pcd_loss = crit
+    # reg_loss, rot_loss, pcd_loss = crit
 
     delta_R_init, delta_t_init = generate_misalignment(max_rot, max_trans)
     delta_q_init = rot2qua(delta_R_init)
@@ -240,7 +240,7 @@ def test(model, loader, crit, max_rot=10, max_trans=0.25):
 
         # translational_loss = reg_loss(delta_q_gt, delta_t_gt, delta_q_pred, delta_t_pred)
         # rotational_loss = rot_loss(delta_q_gt, delta_q_pred)
-        pointcloud_loss = pcd_loss(pcd_gt, pcd_pred)
+        # pointcloud_loss = pcd_loss(pcd_gt, pcd_pred)
         # loss = translational_loss + rotational_loss + pointcloud_loss
         # loss = crit(output, targets)
 
@@ -519,7 +519,7 @@ if __name__ == "__main__":
     # Criteria
     reg_loss = criteria.regression_loss().to(DEVICE)
     rot_loss = criteria.rotation_loss().to(DEVICE)
-    pcd_loss = criteria.chamfer_distance_loss().to(DEVICE)
-    criterion = [reg_loss, rot_loss, pcd_loss]
+    # pcd_loss = criteria.chamfer_distance_loss().to(DEVICE)
+    criterion = [reg_loss, rot_loss] #, pcd_loss]
     
     test(model, test_loader, criterion)
