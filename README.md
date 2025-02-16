@@ -4,9 +4,9 @@ This repository provides a project about deep-learning-based targetless extrinsi
 ## Table of Contents
 - [About the Project](#about-the-project)
 - [Getting Started](#getting-started)
-* [Requirements](#requirements)
-* [Training](#training)
-* [Evaluation](#evaluation)
+    * [Requirements](#requirements)
+    * [Training](#training)
+    * [Evaluation](#evaluation)
 - [Current Result](#current-result)
 - [Contacts](#contacts)
 - [Acknowledgments](#acknowledgments)
