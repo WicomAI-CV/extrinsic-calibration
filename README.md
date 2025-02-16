@@ -12,7 +12,7 @@ This repository provides a project about deep-learning-based targetless extrinsi
 - [Acknowledgments](#acknowledgments)
 
 ## About the Project 
-
+This project was part of the sensor fusion and computer fusion research project at [WiComAI Lab](https://wireless.kookmin.ac.kr/) of Kookmin University, Seoul, South Korea. 
 
 ## Getting Started
 ### Requirements
