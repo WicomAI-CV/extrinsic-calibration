@@ -3,6 +3,8 @@ This repository provides a project about deep-learning-based targetless extrinsi
 
 ## Table of Contents
 - [About the Project](#about-the-project)
+    * [Data Preprocessing](#data-preprocessing)
+    * [Model Architecture](#model-architecture)
 - [Getting Started](#getting-started)
     * [Requirements](#requirements)
     * [Training](#training)
