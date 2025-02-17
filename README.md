@@ -20,8 +20,12 @@ as feature extraction network and CSA transformer from [Lite Vision Transformer]
 and tested using the [KITTI Odometry dataset](https://www.cvlibs.net/datasets/kitti/eval_odometry.php).
 
 #### Data Preprocessing
+The network utilizes  RGB images from the camera and depth images of 2D projections of LiDAR point clouds. 
+The depth image is created by performing rigid transformation on point clouds from the LiDAR coordinate system to the camera coordinate 
+system using the extrinsic parameters of the LiDAR-camera system. 
 
 #### Model Architecture
+
 
 ## Getting Started
 ### Requirements
