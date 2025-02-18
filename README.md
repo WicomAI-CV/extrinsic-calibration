@@ -3,6 +3,7 @@ This repository provides a project about deep-learning-based targetless extrinsi
 
 ## Table of Contents
 - [About the Project](#about-the-project)
+    * [Problem Formulation](#problem-formulation)
     * [Data Preprocessing](#data-preprocessing)
     * [Model Architecture](#model-architecture)
 - [Getting Started](#getting-started)
@@ -19,6 +20,7 @@ The project aims to predicts the misalignment in the extrinsic parameters betwee
 as feature extraction network and CSA transformer from [Lite Vision Transformer](https://arxiv.org/abs/2112.10809) as feature matching network. The deep learning network is trained 
 and tested using the [KITTI Odometry dataset](https://www.cvlibs.net/datasets/kitti/eval_odometry.php).
 
+#### Problem Formulation
 Extrinsic parameters in LiDAR-Camera system is used to perform coordinate transformation of 3D poinnts from LiDAR coordinate system to camera coordinate system.
 This coordinate transformation is used to perform data fusion between the two modalities:
 
