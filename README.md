@@ -19,8 +19,19 @@ The project aims to predicts the misalignment in the extrinsic parameters betwee
 as feature extraction network and CSA transformer from [Lite Vision Transformer](https://arxiv.org/abs/2112.10809) as feature matching network. The deep learning network is trained 
 and tested using the [KITTI Odometry dataset](https://www.cvlibs.net/datasets/kitti/eval_odometry.php).
 
+Extrinsic parameters in LiDAR-Camera system is used to perform coordinate transformation of 3D poinnts from LiDAR coordinate system to camera coordinate system.
+This coordinate transformation is used to perform data fusion between the two modalities:
+
+Given a LiDAR point $P_L: (X_L, Y_L, Z_L)$ and LiDAR point in camera coordinate system $P_L: (X_C, Y_C, Z_C)$, the coordinate transformation of a single LiDAR point
+is expressed as:
+
+$$
+P_C = \begin{bmatrix} R & | & t \end{bmatrix} \cdot P_L = T \cdot P_L,
+$$
+
+
 #### Data Preprocessing
-The network utilizes  RGB images from the camera and depth images of 2D projections of LiDAR point clouds. 
+The network utilizes RGB images from the camera and depth images of 2D projections of LiDAR point clouds. 
 The depth image is created by performing rigid transformation on point clouds from the LiDAR coordinate system to the camera coordinate 
 system using the extrinsic parameters of the LiDAR-camera system. 
 
