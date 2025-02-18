@@ -32,6 +32,20 @@ $$
 where $T$, $R$, and $t$ are the extrinsic parameter matrix, rotation matrix, and translation vector of the LiDAR
 camera system, respectively.
 
+The network aims to correct the deviation in extrinsic parameters accumulated during vehicles operations, where this deviation can be expressed as:
+
+$$ 
+T_{actual} =  \Delta T \cdot T_{known}, 
+$$
+
+where $T_{actual}$ is the actual extrinsic parameter after deviation is considered, $T_{known}$ us the initial extrinsic parameter without the deviation considered, 
+and $\Delta T$ is the extrinsic parameter deviation represented in a rigid transformation. 
+The network predicts the value of $\Delta T$ to obtain the calibrated extrinsic parameter, which expressed as:
+
+$$
+T_{actual} = \Delta T_{predicted}^{-1} \cdot \Delta T \cdot T_{known}.
+$$
+
 #### Data Preprocessing
 The network utilizes RGB images from the camera and depth images of 2D projections of LiDAR point clouds. 
 The depth image is created by performing rigid transformation on point clouds from the LiDAR coordinate system to the camera coordinate 
