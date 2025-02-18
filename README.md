@@ -22,13 +22,15 @@ and tested using the [KITTI Odometry dataset](https://www.cvlibs.net/datasets/ki
 Extrinsic parameters in LiDAR-Camera system is used to perform coordinate transformation of 3D poinnts from LiDAR coordinate system to camera coordinate system.
 This coordinate transformation is used to perform data fusion between the two modalities:
 
-Given a LiDAR point $P_L: (X_L, Y_L, Z_L)$ and LiDAR point in camera coordinate system $P_L: (X_C, Y_C, Z_C)$, the coordinate transformation of a single LiDAR point
-is expressed as:
+Given a set of LiDAR points $P_L = \begin{bmatrix} X_L & Y_L & Z_L \end{bmatrix}^T$ and the point set in camera coordinate system 
+$P_C = \begin{bmatrix} X_C & Y_C & Z_C \end{bmatrix}^T$, the coordinate transformation of the LiDAR point set is expressed as:
 
 $$
 P_C = \begin{bmatrix} R & | & t \end{bmatrix} \cdot P_L = T \cdot P_L,
 $$
 
+where T, R, and t are the extrinsic parameter matrix, rotation matrix, and translation vector of the LiDAR
+camera system, respectively.
 
 #### Data Preprocessing
 The network utilizes RGB images from the camera and depth images of 2D projections of LiDAR point clouds. 
