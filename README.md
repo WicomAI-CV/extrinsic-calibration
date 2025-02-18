@@ -48,6 +48,8 @@ $$
 T_{actual} = \Delta T_{predicted}^{-1} \cdot \Delta T \cdot T_{known}.
 $$
 
+Assuming that the prediction is highly accurate, the deviation term will cancel out.
+
 #### Data Preprocessing
 The network utilizes RGB images from the camera and depth images of 2D projections of LiDAR point clouds. 
 The depth image is created by performing rigid transformation on point clouds from the LiDAR coordinate system to the camera coordinate 
