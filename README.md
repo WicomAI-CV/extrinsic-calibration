@@ -29,6 +29,8 @@ $$
 P_C = \begin{bmatrix} R & | & t \end{bmatrix} \cdot P_L = T \cdot P_L,
 $$
 
+where $T$, $R$, and $t$ are the extrinsic parameter matrix, rotation matrix, and translation vector of the LiDAR
+camera system, respectively.
 
 #### Data Preprocessing
 The network utilizes RGB images from the camera and depth images of 2D projections of LiDAR point clouds. 
