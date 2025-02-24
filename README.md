@@ -55,8 +55,8 @@ The network uses RGB images and depth images from 2D projections of LiDAR point 
 Depth images are created by transforming LiDAR point clouds from the LiDAR to camera coordinate system using extrinsic parameters, 
 then projecting them onto a 2D image with the camera's intrinsic parameters, 
 where the value of each pixel represents the point’s distance to the camera.
-Given a set LiDAR points $P_L: [X_L Y_L Z_L]^{T}$, LiDAR points set in camera coordinate frame $P_C: [X_C Y_C Z_C]^{T}$, 
-projected pixel coordinate in 2D image frame $p_c = [u v]^{T}$, LiDAR-camera extrinsic parameter $T$ , 
+Given a set LiDAR points $P_L: [X_L\,Y_L\,Z_L]^{T}$, LiDAR points set in camera coordinate frame $P_C: [X_C\,Y_C\,Z_C]^{T}$, 
+projected pixel coordinate in 2D image frame $p_c = [u\,v]^{T}$, LiDAR-camera extrinsic parameter $T$ , 
 and camera's intrinsic parameter $K$, the depth image projection is expressed as:
 
 $$
