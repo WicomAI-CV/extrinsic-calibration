@@ -69,7 +69,11 @@ p_c = K \cdot P_C = K \cdot T \cdot P_L =  \begin{bmatrix}
                                               0 & 0 & 1 \\
                                            \end{bmatrix} \cdot 
                                            \begin{bmatrix} R & | & t \end{bmatrix} \cdot
-                                           \begin{bmatrix} X_L \\ Y_L \\ Z_L \end{bmatrix} 
+                                           \begin{bmatrix} 
+                                           X_L \\ 
+                                           Y_L \\ 
+                                           Z_L 
+                                           \end{bmatrix} 
 $$
 
 
