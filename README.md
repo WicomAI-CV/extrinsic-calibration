@@ -24,7 +24,7 @@ and tested using the [KITTI Odometry dataset](https://www.cvlibs.net/datasets/ki
 Extrinsic parameters in LiDAR-Camera system is used to perform coordinate transformation of 3D poinnts from LiDAR coordinate system to camera coordinate system.
 This coordinate transformation is used to perform data fusion between the two modalities:
 
-Given a LiDAR point $P_L: (X_L, Y_L, Z_L)$ and LiDAR point in camera coordinate system $P_L: (X_C, Y_C, Z_C)$, the coordinate transformation of a single LiDAR point
+Given a LiDAR point $P_L: (X_L, Y_L, Z_L)$ and LiDAR point in camera coordinate system $P_C: (X_C, Y_C, Z_C)$, the coordinate transformation of a single LiDAR point
 is expressed as:
 
 $$
@@ -51,12 +51,17 @@ $$
 Assuming that the prediction is highly accurate, the deviation term will cancel out.
 
 #### Data Preprocessing
-The network utilizes RGB images from the camera and depth images of 2D projections of LiDAR point clouds. 
-The depth image is created by performing rigid transformation on point clouds from the LiDAR coordinate system to the camera coordinate 
-system using the extrinsic parameters of the LiDAR-camera system. After the rigid transformation,
-the point clouds is projected onto the 2D image using the intrinsic parameters of the camera, 
-where each projected pixed of a point is given a pixel value corresponding to the point distance to the camera.
+The network uses RGB images and depth images from 2D projections of LiDAR point clouds. 
+Depth images are created by transforming LiDAR point clouds from the LiDAR to camera coordinate system using extrinsic parameters, 
+then projecting them onto a 2D image with the camera's intrinsic parameters, 
+where the value of each pixel represents the point’s distance to the camera.
+Given a set LiDAR points $P_L: [X_L Y_L Z_L]^{T}$, LiDAR points set in camera coordinate frame $P_C: [X_C Y_C Z_C]^{T}$, 
+projected pixel coordinate in 2D image frame $p_c = [u v]^$, LiDAR-camera extrinsic parameter $T$ , 
+and camera's intrinsic parameter $K$, the depth image projection is expressed as:
 
+$$
+p_c = K \cdot P_C = K \cdot T \cdot P_L
+$$
 
 
 
