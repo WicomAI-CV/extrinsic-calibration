@@ -72,7 +72,8 @@ p_c = K \cdot P_C = K \cdot T \cdot P_L =  \begin{bmatrix}
                                            \begin{bmatrix} 
                                            X_L \\ 
                                            Y_L \\ 
-                                           Z_L 
+                                           Z_L \\
+                                           1
                                            \end{bmatrix} 
 $$
 
