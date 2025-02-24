@@ -63,7 +63,13 @@ projected pixel coordinate in 2D image frame $p_c: [u \quad v]^{T}$, LiDAR-camer
 and camera's intrinsic parameter $K$, the depth image projection is expressed as:
 
 $$
-p_c = K \cdot P_C = K \cdot T \cdot P_L
+p_c = K \cdot P_C = K \cdot T \cdot P_L =  \begin{bmatrix} 
+                                              f_x & 0 & c_x \\
+                                              0 & f_y & c_y \\
+                                              0 & 0 & 1 \\
+                                           \end{bmatrix} \cdot 
+                                           \begin{bmatrix} R & | & t \end{bmatrix} \cdot
+                                           \begin{bmatrix} X_L \\ Y_L \\ Z_L \end{bmatrix} 
 $$
 
 
