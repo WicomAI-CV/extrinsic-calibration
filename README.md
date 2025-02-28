@@ -85,6 +85,8 @@ where $f_x$, $f_y$, $c_x$, and $c_y$ are the intrinsic parameters of the camera.
 |:--:| 
 | *Architecture of the Extrinsic Calibration Deep Network* |
 
+The model consists of
+
 ## Getting Started
 ### Requirements
 
