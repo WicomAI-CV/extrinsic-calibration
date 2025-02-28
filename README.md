@@ -81,7 +81,7 @@ where $f_x$, $f_y$, $c_x$, and $c_y$ are the intrinsic parameters of the camera.
 
 
 #### Model Architecture
-
+![architecture](./figures/transcalib_architecture_rev.png)
 
 ## Getting Started
 ### Requirements
