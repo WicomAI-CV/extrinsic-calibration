@@ -77,6 +77,7 @@ p_c = K \cdot P_C = K \cdot T \cdot P_L =  \begin{bmatrix}
                                            \end{bmatrix} 
 $$
 
+where $f_x$, $f_y$, $c_x$, and $c_y$ are the intrinsic parameters of the camera.
 
 
 #### Model Architecture
