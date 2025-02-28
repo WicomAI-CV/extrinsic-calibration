@@ -1,6 +1,6 @@
 __pycache__/*
 */__pycache__/*
-*.png
+./*.png
 cek_dset.py
 checkpoint_weights/*
 cek_model.py
