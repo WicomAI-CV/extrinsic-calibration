@@ -85,7 +85,16 @@ where $f_x$, $f_y$, $c_x$, and $c_y$ are the intrinsic parameters of the camera.
 |:--:| 
 | *Architecture of the Extrinsic Calibration Deep Network* |
 
-The model consists of
+The model consists of two branches of feature extraction, each for RGB image and LiDAR depth image. 
+The two branches use the same architecture of [EfficientNetV2](https://arxiv.org/abs/2104.00298) without the fully-connected layers 
+and different input channel for each branch (3 channels for RGB and 1 channel for depth).
+
+The resulting feature maps from both branches is the concatenated and are processed in the feature matching network.
+The feature matching network leverages CSA transformer from [Lite Vision Transformer](https://arxiv.org/abs/2112.10809)
+to find corresponding features from both modalities.
+
+The feature mathcing result is then fed to the fully connected layers where $1 \times 3$ translation vectors and
+$1 \times 4 $ rotation vectors (in quaternions) are predicted. 
 
 ## Getting Started
 ### Requirements
