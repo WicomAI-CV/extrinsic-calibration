@@ -100,7 +100,7 @@ $1 \times 4$ rotation vectors (in quaternions) are predicted.
 A Three loss functions are employed for the model training. The combined loss function are expressed as follows:
 
 $$
-L = \lambda_1 L_{trans} + \lambda_2 L_{rot} + \lambda_3 L_{pcd},
+L = \lambda_1 L_{trans} + \lambda_2 L_{rot} + \lambda_3 L_{\text{PCD}},
 $$
 
 where $\lambda_1$, $\lambda_2$, and $\lambda_3$ are the weights for each loss term.
