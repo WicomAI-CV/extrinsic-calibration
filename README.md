@@ -113,7 +113,7 @@ L_{trans}(t_{pred}, t_{gt}) = \frac{1}{n} \sum_{i}^{n} \text{smoothL1}(t_{pred\ 
 $$
 
 $$
-\text{smooth}_{L1}(x) =
+\text{smoothL1}(x) =
 \begin{cases} 
 \frac{1}{2} x^2, & \text{if } |x| < 1 \\
 |x| - \frac{1}{2}, & \text{otherwise}
