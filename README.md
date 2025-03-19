@@ -109,7 +109,7 @@ Each loss function term is expressed as below:
 * Translation Loss
 
 $$
-L_{trans}(t_{pred}, t_{gt}) = \frac{1}{n} \sum_{i}^{n} \text{smooth}_{L1}(t_{pred\ i} - t_{gt\ i}),
+L_{trans}(t_{pred}, t_{gt}) = \frac{1}{n} \sum_{i}^{n} \text{smooth}_{L1} (t_{pred\ i} - t_{gt\ i}),
 $$
 
 $$
