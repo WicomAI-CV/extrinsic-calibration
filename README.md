@@ -94,7 +94,12 @@ The feature matching network leverages CSA transformer from [Lite Vision Transfo
 to find corresponding features from both modalities.
 
 The feature mathcing result is then fed to the fully connected layers where $1 \times 3$ translation vectors and
-$1 \times 4$ rotation vectors (in quaternions) are predicted. 
+$1 \times 4$ rotation vectors (in quaternions) are predicted.
+
+#### Loss Functions
+Three loss functions are employed for the model training. 
+
+
 
 ## Getting Started
 ### Requirements
