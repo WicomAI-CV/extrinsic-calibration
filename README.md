@@ -107,12 +107,23 @@ where $\lambda_1$, $\lambda_2$, and $\lambda_3$ are the weights for each loss te
 Each loss function term is expressed as below:
 
 * Translation Loss
+
 $$
 L_{trans}(t_{pred}, t_{gt}) = \frac{1}{n} \sum_{i}^{n} \text{smoothL1}(t_{pred\ i} - t_{gt\ i}),
 $$
 
 $$
 \text{smoothL1}(x) = \begin{cases} 0.5x^2 & \text{if } |x| < 1 \\ |x| - 0.5 & \text{otherwise} \end{cases},
+$$
+
+* Rotation Loss
+
+$$
+\L_{rot}(q_{pred}, q_{gt}) = D_a(q_{gt} * \text{inv}(q_{pred})),
+$$
+
+$$
+D_a(m) = \text{atan2}\left(\sqrt{b^2_m + c^2_m + d^2_m}, \, |a_m|\right),
 $$
 
 ## Getting Started
