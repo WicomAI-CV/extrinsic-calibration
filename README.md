@@ -126,6 +126,12 @@ $$
 D_a(m) = \text{atan2}\left(\sqrt{b^2_m + c^2_m + d^2_m}, \, |a_m|\right),
 $$
 
+* Point Cloud Distance Loss
+
+$$
+L_{pcd}(P_{pred}, P_{gt}) = \frac{1}{N} \sum_{x \in P_{pred}} \min_{y \in P_{gt}} \| x - y \|_2^2 + \frac{1}{M} \sum_{y \in P_{gt}} \min_{x \in P_{pred}} \| x - y \|_2^2,
+$$
+
 ## Getting Started
 ### Requirements
 
