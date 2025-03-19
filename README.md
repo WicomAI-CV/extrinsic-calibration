@@ -119,7 +119,7 @@ $$
 * Rotation Loss
 
 $$
-\L_{rot}(q_{pred}, q_{gt}) = D_a(q_{gt} * \text{inv}(q_{pred})),
+L_{rot}(q_{pred}, q_{gt}) = D_a(q_{gt} * \text{inv}(q_{pred})),
 $$
 
 $$
