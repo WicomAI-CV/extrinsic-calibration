@@ -140,7 +140,9 @@ where $P_{pred}$ and $P_{gt}$ are the ground truth point cloud data and point cl
 
 ## Getting Started
 ### Requirements
+This project was developed on an environment consisting of:
 * Python 3.10.12
+* NVIDIA RTX 3090Ti GPU with CUDA v11.8 and CuDNN v11.8
 * Install dependencies using the syntax below:
 ```
 pip install -r requirements.txt
