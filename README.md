@@ -120,7 +120,7 @@ $$
 \end{cases}
 $$
 
-* Rotation Loss
+* Rotation Loss (Quaternion Distance)
 
 $$
 L_{rot}(q_{pred}, q_{gt}) = D_a(q_{gt} * \text{inv}(q_{pred})),
@@ -140,7 +140,11 @@ where $P_{pred}$ and $P_{gt}$ are the ground truth point cloud data and point cl
 
 ## Getting Started
 ### Requirements
-
+* Python 3.10.12
+* Install dependencies using the syntax below:
+```
+pip install -r requirements.txt
+```
 
 ### Training
 
