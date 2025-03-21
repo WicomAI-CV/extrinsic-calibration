@@ -149,7 +149,23 @@ pip install -r requirements.txt
 ```
 
 ### Training
-
+To train without using Comet ML, run this on your terminal:
+```
+python train.py
+```
+To train using Comet ML, run:
+```
+python train_with_cometml.py
+```
+Before using `train_with_cometml.py`, modify these lines:
+```
+experiment = Experiment(
+    api_key = YOUR_COMETML_API,
+    project_name = "your_project_name",
+    workspace = "your_workspace_name",
+    ...
+)
+```
 
 ### Evaluation
 
