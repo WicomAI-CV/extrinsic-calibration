@@ -160,9 +160,9 @@ python train_with_cometml.py
 Before using `train_with_cometml.py`, modify these lines:
 ```
 experiment = Experiment(
-    api_key = YOUR_COMETML_API,
-    project_name = "your_project_name",
-    workspace = "your_workspace_name",
+    api_key = YOUR_COMETML_API, # modify to your COMET ML API
+    project_name = "your_project_name", # modify to your project name
+    workspace = "your_workspace_name", # modify to your workspace name
     ...
 )
 ```
