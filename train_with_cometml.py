@@ -30,8 +30,8 @@ from models.realignment_layer import realignment_layer
 
 import dataset
 import dataset.kitti_odometry_remote
-from models.lvt_effnet import TransCalib_lvt_efficientnet_june2
-from models.lvt_effnet_light_v1 import TransCalib_lvt_efficientnet_july18
+from models.LVT_models.lvt_effnet import TransCalib_lvt_efficientnet_june2
+from models.LVT_models.lvt_effnet_light_v1 import TransCalib_lvt_efficientnet_july18
 import criteria
 
 from config.model_config import *
