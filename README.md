@@ -140,6 +140,13 @@ where $P_{pred}$ and $P_{gt}$ are the ground truth point cloud data and point cl
 
 ## Getting Started
 ### Requirements
+First, download [KITTI Odometry dataset](https://www.cvlibs.net/datasets/kitti/eval_odometry.php) on your setup.
+After downloading the dataset, modify the path to the dataset in the training file (`train_with_cometml.py` or `train.py`)
+and the testing file (`test_continuous.py` or `test_iterative.py`):
+```
+DATASET_FILEPATH = "/path/to/kitti/odometry/dataset"
+```
+
 This project was developed on an environment consisting of:
 * Python 3.10.12
 * NVIDIA RTX 3090Ti GPU with CUDA v11.8 and CuDNN v11.8
