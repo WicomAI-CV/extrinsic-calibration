@@ -171,11 +171,9 @@ experiment = Experiment(
 
 
 ## Current Result
-| ![Result_1](./figures/eval_result_1.png) |
-| ![Result_2](./figures/eval_result_2.png) |
-| ![Result_3](./figures/eval_result_3.png) |
+| ![Result_1](./figures/eval_result_1.png) | ![Result_2](./figures/eval_result_2.png) | ![Result_3](./figures/eval_result_3.png) |
 |:--:|
-| *Evaluation Results* |
+|| *Evaluation Results* ||
 
 ## Contacts
 Miftahul Umam
